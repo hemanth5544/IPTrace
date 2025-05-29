@@ -1,7 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"net"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/maxmind/mmdbwriter"
+	"github.com/maxmind/mmdbwriter/mmdbtype"
 	"github.com/oschwald/maxminddb-golang"
 )
 
@@ -14,6 +21,30 @@ func mmdbConnect() {
 	mmdbOpenFile("CITY")
 }
 
+func mmdbOpenFile(key string) {
+	if len(os.Getenv(key)) > 0 {
+		ipVersions := []int{4, 6}
+		for _, ipVersion := range ipVersions {
+			connectionId := key + "ipv" + strconv.Itoa(ipVersion)
+			filePath := "downloads/" + os.Getenv(key) + "-ipv" + strconv.Itoa(ipVersion) + ".mmdb"
+
+			if _, err := os.Stat(filePath); err == nil {
+				_, ok := mmDb[connectionId]
+				if !ok {
+					fmt.Println("Opening MMDB file: " + filePath)
+					conn, err := maxminddb.Open(filePath)
+					if err != nil {
+						panic(err)
+					}
+					//mmDd is a map of connectionId to maxminddb.Reader it will retivere taht connections which were mde by ip if again the request comes
+					// This allows us to have multiple connections for different IP versions
+					mmDb[connectionId] = conn
+				}
+			}
+		}
+	}
+}
+
 func mmdbClose() {
 	for connectionId, conn := range mmDb {
 		err := conn.Close()
@@ -23,6 +54,3 @@ func mmdbClose() {
 		delete(mmDb, connectionId)
 	}
 }
-
-
-func mmdbOpenFile(dbType string) {}

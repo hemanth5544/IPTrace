@@ -2,13 +2,10 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/maxmind/mmdbwriter"
-	"github.com/maxmind/mmdbwriter/mmdbtype"
 	"github.com/oschwald/maxminddb-golang"
 )
 
@@ -47,6 +44,25 @@ func mmdbOpenFile(key string) {
 
 func mmdbClose() {
 	for connectionId, conn := range mmDb {
+		err := conn.Close()
+		if err != nil {
+			panic(err)
+		}
+		delete(mmDb, connectionId)
+	}
+}
+
+func mmdbInitialised(key string) bool {
+	connectionId := key + "ipv4"
+	_, ok := mmDb[connectionId]
+
+	return ok
+}
+
+func mmdbCloseFile(connectionId string, filePath string) {
+	conn, ok := mmDb[connectionId]
+	if ok {
+		fmt.Println("Closing MMDB file: " + filePath)
 		err := conn.Close()
 		if err != nil {
 			panic(err)

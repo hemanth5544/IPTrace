@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/maxmind/mmdbwriter"
+	"github.com/maxmind/mmdbwriter/mmdbtype"
 	"github.com/oschwald/maxminddb-golang"
 )
 
@@ -70,3 +73,14 @@ func mmdbCloseFile(connectionId string, filePath string) {
 		delete(mmDb, connectionId)
 	}
 }
+
+func mmdbIp(ip net.IP) *Ip {
+	ipString := ip.String()
+	ipVersion := 4
+	if strings.Contains(ipString, ":") {
+		ipVersion = 6
+	}
+
+
+}
+

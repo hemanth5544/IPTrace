@@ -81,6 +81,11 @@ func mmdbIp(ip net.IP) *Ip {
 		ipVersion = 6
 	}
 
+	ipStruct := NewIp(ipString, ipVersion)
 
+
+
+	return ipStruct
 }
+
 

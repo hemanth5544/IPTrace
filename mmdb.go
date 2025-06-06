@@ -83,9 +83,74 @@ func mmdbIp(ip net.IP) *Ip {
 
 	ipStruct := NewIp(ipString, ipVersion)
 
+	if hasCityDatabase() {
+		connectionId := "CITYipv" + strconv.Itoa(ipVersion)
+		_, ok := mmDb[connectionId]
+		if ok {
+			var mmdbCity MmdbCity
+			err := mmDb[connectionId].Lookup(ip, &mmdbCity)
+			if err != nil {
+				panic(err)
+			}
 
+			if len(mmdbCity.City.Names.Value) > 0 {
+				ipStruct.City = mmdbCity.City.Names.Value
+				ipStruct.Latitude = mmdbCity.Location.Latitude
+				ipStruct.Longitude = mmdbCity.Location.Longitude
+				ipStruct.FoundCity = true
+
+				for i, subdivision := range mmdbCity.Subdivisions {
+					switch i {
+					case 0:
+						ipStruct.State1 = subdivision.Names.Value
+					case 1:
+						ipStruct.State2 = subdivision.Names.Value
+					}
+				}
+			}
+
+			if len(mmdbCity.Country.ISOCode) > 0 {
+				ipStruct.CountryCode = mmdbCity.Country.ISOCode
+				ipStruct.FoundCountry = true
+			}
+		}
+	}
+
+	if !ipStruct.FoundCountry && hasCountryDatabase() {
+		connectionId := "COUNTRYipv" + strconv.Itoa(ipVersion)
+		_, ok := mmDb[connectionId]
+		if ok {
+			var mmdbCountry MmdbCountry
+			err := mmDb[connectionId].Lookup(ip, &mmdbCountry)
+			if err != nil {
+				panic(err)
+			}
+
+			if len(mmdbCountry.Country.ISOCode) > 0 {
+				ipStruct.CountryCode = mmdbCountry.Country.ISOCode
+				ipStruct.FoundCountry = true
+			}
+		}
+	}
+
+	if hasASNDatabase() {
+		connectionId := "ASNipv" + strconv.Itoa(ipVersion)
+		_, ok := mmDb[connectionId]
+		if ok {
+			var mmdbASN MmdbASN
+			err := mmDb[connectionId].Lookup(ip, &mmdbASN)
+			if err != nil {
+				panic(err)
+			}
+
+			if mmdbASN.AsNumber > 0 {
+				ipStruct.OrganisationNumber = mmdbASN.AsNumber
+				ipStruct.OrganisationName = mmdbASN.AsOrganisation
+				ipStruct.FoundASN = true
+			}
+		}
+	}
 
 	return ipStruct
 }
-
 
